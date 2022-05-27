@@ -46,7 +46,6 @@ pub enum Model {
         type_field: Type,
     },
     MultiType {
-        /// The vec should only contain values of variant [`Model::Type`]
         #[serde(rename = "type")]
         types: [Type; 2],
     },

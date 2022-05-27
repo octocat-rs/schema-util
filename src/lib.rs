@@ -24,11 +24,8 @@ pub(crate) fn types_to_string(types: &[Type; 2]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        model::{Model, Modeler, Type},
-        traits::PrintAsStruct,
-    };
-    use std::{collections::HashMap, error::Error, fs};
+    use crate::{model::Modeler, traits::PrintAsStruct};
+    use std::{error::Error, fs};
 
     #[test]
     fn test() -> Result<(), Box<dyn Error>> {
