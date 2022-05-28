@@ -30,8 +30,10 @@ impl PrintAsStruct for Modeler {
                 }
             };
 
-            ret.push_str(format!("\n\t{}: {},", key, ty).as_str());
+            ret.push_str(format!("\n    {}: {},", key, ty).as_str());
         });
+
+        ret.push_str("\n}");
 
         ret
     }
