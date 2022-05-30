@@ -30,7 +30,12 @@ impl PrintAsStruct for Modeler {
                 }
             };
 
-            ret.push_str(format!("\n    {}: {},", key, ty).as_str());
+            if key != "type" {
+                ret.push_str(format!("\n    pub {}: {},", key, ty).as_str());
+            } else {
+                ret.push_str("\n    #[serde(rename = \"type\")]");
+                ret.push_str(format!("\n    pub type_field: {},", ty).as_str());
+            }
         });
 
         ret.push_str("\n}");
