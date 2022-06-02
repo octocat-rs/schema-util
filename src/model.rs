@@ -1,4 +1,5 @@
 use crate::{traits::PrintAsStruct, types_to_string};
+use heck::ToUpperCamelCase;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use strum_macros::{Display, EnumString};
@@ -7,17 +8,27 @@ use strum_macros::{Display, EnumString};
 pub struct Modeler {
     pub title: String,
     pub properties: HashMap<String, Model>,
+    pub required: Vec<String>,
 }
 
 impl PrintAsStruct for Modeler {
     fn print(self) -> String {
         let mut ret = "#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]".to_owned();
-        ret.push_str(format!("\npub struct {} {{", self.title).as_str());
+        ret.push_str(format!("\npub struct {} {{", self.title.to_upper_camel_case()).as_str());
+
+        let title_to_type = |s: &str| match s {
+            "Simple User" | "Public User" | "Private User" | "Reaction Rollup" => s.to_upper_camel_case(),
+            "Repository" | "Milestone" => s.to_owned(),
+            "License Simple" => "SimpleLicense".to_owned(),
+            "author_association" => "Association".to_owned(),
+            _ => "Object".to_owned(),
+        };
 
         self.properties.iter().for_each(|(key, val)| {
             let ty: String = match val {
                 Model::Type { type_field } => type_field.to_string(),
                 Model::MultiType { types } => types_to_string(types),
+                Model::TitledObject { title, .. } => title_to_type(title),
                 Model::AnyOf { any_of: types } => {
                     let to_type = |ty: &Model| match ty {
                         Model::Type { type_field } => *type_field,
@@ -30,11 +41,13 @@ impl PrintAsStruct for Modeler {
                 }
             };
 
-            if key != "type" {
-                ret.push_str(format!("\n    pub {}: {},", key, ty).as_str());
-            } else {
-                ret.push_str("\n    #[serde(rename = \"type\")]");
-                ret.push_str(format!("\n    pub type_field: {},", ty).as_str());
+            if self.required.contains(key) {
+                if key != "type" {
+                    ret.push_str(format!("\n    pub {}: {},", key, ty).as_str());
+                } else {
+                    ret.push_str("\n    #[serde(rename = \"type\")]");
+                    ret.push_str(format!("\n    pub type_field: {},", ty).as_str());
+                }
             }
         });
 
@@ -44,7 +57,6 @@ impl PrintAsStruct for Modeler {
     }
 }
 
-/// Use HashMap
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Model {
@@ -56,8 +68,14 @@ pub enum Model {
         #[serde(rename = "type")]
         types: [Type; 2],
     },
+    TitledObject {
+        title: String,
+        #[serde(rename = "type")]
+        type_field: Type,
+    },
     AnyOf {
-        /// The vec should only contain values of variant [`Model::Type`]
+        /// The vec should only contain values of variant [`Model::Type`] and/or
+        /// [`Model::TitledObject`]
         #[serde(rename = "anyOf")]
         any_of: Box<[Model; 2]>,
     },
