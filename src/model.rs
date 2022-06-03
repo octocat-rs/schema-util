@@ -24,8 +24,10 @@ impl PrintAsStruct for Modeler {
             _ => "Object".to_owned(),
         };
 
-        self.properties.iter().for_each(|(key, val)| {
-            let ty: String = match val {
+        self.required.into_iter().for_each(|field| {
+            let model = self.properties.get(&field).unwrap();
+
+            let ty: String = match model {
                 Model::Type { type_field } => type_field.to_string(),
                 Model::MultiType { types } => types_to_string(types),
                 Model::TitledObject { title, .. } => title_to_type(title),
@@ -41,13 +43,11 @@ impl PrintAsStruct for Modeler {
                 }
             };
 
-            if self.required.contains(key) {
-                if key != "type" {
-                    ret.push_str(format!("\n    pub {}: {},", key, ty).as_str());
-                } else {
-                    ret.push_str("\n    #[serde(rename = \"type\")]");
-                    ret.push_str(format!("\n    pub type_field: {},", ty).as_str());
-                }
+            if field.as_str() != "type" {
+                ret.push_str(format!("\n    pub {}: {},", field, ty).as_str());
+            } else {
+                ret.push_str("\n    #[serde(rename = \"type\")]");
+                ret.push_str(format!("\n    pub type_field: {},", ty).as_str());
             }
         });
 
