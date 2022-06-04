@@ -43,12 +43,13 @@ impl PrintAsStruct for Modeler {
                 }
             };
 
-            if field.as_str() != "type" {
-                ret.push_str(format!("\n    pub {}: {},", field, ty).as_str());
-            } else {
-                ret.push_str("\n    #[serde(rename = \"type\")]");
-                ret.push_str(format!("\n    pub type_field: {},", ty).as_str());
-            }
+            match field.as_str() {
+                "type" | "ref" => {
+                    ret.push_str(format!("\n    #[serde(rename = \"{field}\")]").as_str());
+                    ret.push_str(format!("\n    pub {field}_field: {ty},").as_str());
+                }
+                _ => ret.push_str(format!("\n    pub {field}: {ty},").as_str()),
+            };
         });
 
         ret.push_str("\n}");
